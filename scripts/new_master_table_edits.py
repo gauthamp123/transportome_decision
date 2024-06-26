@@ -65,8 +65,7 @@ def ce_role_dict_generation():
 def master_dict_generation(green_dir):
     getSmithWaterman(pwd)
     parse_sw(pwd)
-    #getSmithWaterman('/Users/gautham/microbiome_project/test_shit')
-    #parse_sw('/Users/gautham/microbiome_project/test_shit')
+
 
     
     for filename in os.listdir(green_dir):
@@ -173,6 +172,7 @@ def tsv_generation():
         output_row = [None] * len(df_columns)
         output_row[0] = tcid_acc_key.split('-')[0].strip()
         output_row[1] = tcid_acc_key.split('-')[1].strip()
+        
 
         to_write = False
         all_negative = True
@@ -217,6 +217,7 @@ def tsv_generation():
                     output_row[start_index+6] = str(first_protein_vals['scov']).strip()
                     output_row[2] = str(first_protein_vals['CE']).strip()
                     output_row[3] = str(first_protein_vals['Role']).strip()
+                    output_row[4] = str(first_protein_vals['hit_tms_no']).strip()
             else:
                 output_row[NUM_COL_PRE_GENOME+i] = '-'
                 start_index = NUM_COL_PRE_GENOME+len(genomes)+NUM_COL_PER_GENOME*i
@@ -225,7 +226,7 @@ def tsv_generation():
         if to_write or all_negative:
             master_array.append(output_row)
 
-    with open('test_tables/new_sorted_master_table.tsv', 'w', newline='') as tsv_output:
+    with open('tables/master_table.tsv', 'w', newline='') as tsv_output:
         sorted_master_array = sorted(master_array, key=lambda x: str(x[0]))
         writer = csv.writer(tsv_output, delimiter='\t')
         writer.writerows(sorted_master_array)
@@ -259,16 +260,12 @@ def genome_tsv_generation():
                 output_row = [None] * len(genome_columns)
                 output_row[0] = tcid_acc_key.split('-')[0]
                 output_row[1] = tcid_acc_key.split('-')[1]
-                # if 'WP_062382148' in tcid_acc_key:
-                #     # print(getInfoAsRow('GCF_001558775.1', '1.A.115.1.5-WP_062382148'))
-                #     # print('-------------')
-                #     # print(master_dict[tcid_acc_key][genome])
+
 
                 temp_arr = []
                 for protein in master_dict[tcid_acc_key][genome]:
                     temp = copy.copy(output_row)
                     genome_master_array.append(additional_row(temp, master_dict[tcid_acc_key][genome][protein]))
-                    #genome_master_array.append(row_to_add)
         
         filename = f"{pwd}/{genome}/test_genome_{genome}.tsv"
         with open(filename, 'w', newline='') as tsv_output:
@@ -342,23 +339,15 @@ def gen_family_tsv(directory, greens_dir):
         fam_percents[family] = new_list
 
     
-    # for f in total_families:
-    #     family_data[f] = []
-
-    #     for g in genome_content:
-    #         if f in genome_content[g]:
-    #             family_data[f].append(1)
-    #         else:
-    #             family_data[f].append(0)
 
 
     percent_df = pd.DataFrame.from_dict(fam_percents, orient='index')
     percent_df.columns = genomes
-    percent_df.to_csv('test_tables/family_percent.tsv')
+    percent_df.to_csv('tables/family_percent.tsv')
     
     fam_df = pd.DataFrame(family_data)
     fam_df.index = total_families
-    fam_df.to_csv('test_tables/family_matrix.tsv')
+    fam_df.to_csv('tables/family_matrix.tsv')
 
 master_dict_generation(pwd + '/greens')
 master_df_column_gen(pwd)
