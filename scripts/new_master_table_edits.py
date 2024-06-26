@@ -5,9 +5,13 @@ import os
 import csv
 import copy
 import subprocess
+import argparse
 
 genomes = []
-pwd = 'test_comparisons'
+PWD = '../test_master_table/test_comparisons'
+CHEBI_PATH = ''
+SUBSTRATE_TABLE_PATH = ''
+OUTPUT_DIR = ''
 
 superfamilies = ['1.A.17', '2.A.7', '1.E.11', '1.E.36', '1.C.12', '1.A.72', '2.A.29', '2.A.66','3.A.3', '1.C.41', '2.A.6']
 
@@ -42,8 +46,8 @@ def ce_role_dict_generation():
                         'CHEBI:23924', 'CHEBI:27780', 'CHEBI:35703', 'CHEBI:37958', 'CHEBI:38161', 'CHEBI:71338', 'CHEBI:62488',
                         'CHEBI:33280', 'CHEBI:25728'])
 
-    graph, idToName, nameToId, idToParent, altIDToID, idToRelationship = oboParse('chebi.obo')
-    predecessorDict = terminalPredecessorParse('substrateTypes.tsv', altIDToID)
+    graph, idToName, nameToId, idToParent, altIDToID, idToRelationship = oboParse(CHEBI_PATH)
+    predecessorDict = terminalPredecessorParse(SUBSTRATE_TABLE_PATH, altIDToID)
 
     myGroup = {}
     for key in cleanChebiIDs:
@@ -63,8 +67,8 @@ def ce_role_dict_generation():
     return myGroup
 
 def master_dict_generation(green_dir):
-    getSmithWaterman(pwd)
-    parse_sw(pwd)
+    getSmithWaterman(PWD)
+    parse_sw(PWD)
 
 
     
@@ -123,17 +127,6 @@ def master_dict_generation(green_dir):
                     scov_val = round(float(((info_row['query_end'] - info_row['query_start'] + 1) / info_row['query_len']) * 100), 1)
 
 
-                    #print(f"QID: {row['#Query_id']}")
-                    #print(f"QUERY {qcov_val} - {info_row['hit_end']} - {info_row['hit_start']} + 1) / {info_row['hit_len']}")
-                    #print(f"SUBJECT {scov_val}  - {info_row['query_end']} - {info_row['query_start']} + 1) / {info_row['query_len']}")
-                    #qcov_val = int(info_row['hit_end']) - int(info_row['hit_start'])
-                    #scov_val = int(info_row['query_end']) - int(info_row['query_start'])
-
-                    # if tcid_acc == '1.A.115.1.5-WP_062382148':
-                    #     print('here')
-                    #     print(row['#Query_id'])
-
-
                     master_dict[tcid_acc][genome][row['#Query_id']] = {
                         'CE' : 'N/A',
                         'Role' : 'N/A',
@@ -161,8 +154,8 @@ NUM_COL_PRE_GENOME = 5
 NUM_COL_PER_GENOME = 6
 
 def tsv_generation():
-    df_columns = master_df_column_gen('test_comparisons')
-    master_dict_generation('test_comparisons/greens')
+    df_columns = master_df_column_gen(PWD)
+    master_dict_generation(PWD + '/greens')
     master_df = pd.DataFrame(columns=df_columns)
 
     master_array = []
@@ -226,7 +219,7 @@ def tsv_generation():
         if to_write or all_negative:
             master_array.append(output_row)
 
-    with open('tables/master_table.tsv', 'w', newline='') as tsv_output:
+    with open(f'{OUTPUT_DIR}/master_table.tsv', 'w', newline='') as tsv_output:
         sorted_master_array = sorted(master_array, key=lambda x: str(x[0]))
         writer = csv.writer(tsv_output, delimiter='\t')
         writer.writerows(sorted_master_array)
@@ -267,7 +260,7 @@ def genome_tsv_generation():
                     temp = copy.copy(output_row)
                     genome_master_array.append(additional_row(temp, master_dict[tcid_acc_key][genome][protein]))
         
-        filename = f"{pwd}/{genome}/test_genome_{genome}.tsv"
+        filename = f"{PWD}/{genome}/test_genome_{genome}.tsv"
         with open(filename, 'w', newline='') as tsv_output:
             writer = csv.writer(tsv_output, delimiter='\t')
             writer.writerows(genome_master_array)
@@ -343,16 +336,42 @@ def gen_family_tsv(directory, greens_dir):
 
     percent_df = pd.DataFrame.from_dict(fam_percents, orient='index')
     percent_df.columns = genomes
-    percent_df.to_csv('tables/family_percent.tsv')
+    percent_df.to_csv(f'{OUTPUT_DIR}/family_percent.tsv')
     
     fam_df = pd.DataFrame(family_data)
     fam_df.index = total_families
-    fam_df.to_csv('tables/family_matrix.tsv')
+    fam_df.to_csv(f'{OUTPUT_DIR}/family_matrix.tsv')
 
-master_dict_generation(pwd + '/greens')
-master_df_column_gen(pwd)
-genome_tsv_generation()
-        
+def main():
+    parser = argparse.ArgumentParser(description='Master Table Generation Script')
+    parser.add_argument('-p', '--PWD', type=str, help='Greens Information Directory')
+    parser.add_argument('-c', '--chebi', type=str, help='Chebi obo file location')
+    parser.add_argument('-s', '--substrates', type=str, help='Substrate table file location')
+    parser.add_argument('-o', '--outDir', type=str, help='Output directory')
 
-tsv_generation()
-gen_family_tsv(pwd, pwd + '/greens')
+    args = parser.parse_args()
+
+    global PWD
+    global CHEBI_PATH
+    global SUBSTRATE_TABLE_PATH
+    global OUTPUT_DIR
+
+    if args.PWD is not None:
+        PWD = args.PWD
+    if args.chebi is not None:
+        CHEBI_PATH = args.chebi
+    if args.substrates is not None:
+        SUBSTRATE_TABLE_PATH = args.substrates
+    if args.outDir is not None:
+        OUTPUT_DIR = args.outDir
+    
+    master_dict_generation(PWD + '/greens')
+    master_df_column_gen(PWD)
+    #genome_tsv_generation()
+            
+
+    tsv_generation()
+    #gen_family_tsv(PWD, PWD + '/greens')
+
+main()
+
