@@ -8,12 +8,10 @@ import subprocess
 import argparse
 
 genomes = []
-
 PWD = 'test_master_table/test_comparisons'
 CHEBI_PATH = 'src/chebi.obo'
 SUBSTRATE_TABLE_PATH = 'src/substrateTypes.tsv'
 OUTPUT_DIR = 'src/tables'
-
 
 superfamilies = ['1.A.17', '2.A.7', '1.E.11', '1.E.36', '1.C.12', '1.A.72', '2.A.29', '2.A.66','3.A.3', '1.C.41', '2.A.6']
 
@@ -63,9 +61,9 @@ def ce_role_dict_generation():
             myGroup[key]['Role'] = []
             for id in cleanChebiIDs[key]:
                 id = findPrimary(id, altIDToID)#id, id_to_relationship, idToName, altIDToID, graph, idToParent
-
                 idPredecessors = findPredecessor(id,predecessorDict,graph, altIDToID, idToName)
                 idRoles = findPredecessor(id,predecessorDict,graph, altIDToID, idToName)
+                idRoles = findRole(id,idToRelationship,idToName, altIDToID, graph, idToParent,classes=role_classes)
                 if len(idPredecessors) == 0:
                     myGroup[key]['CE'].append(getSubstrateName(id, idToName) + '(' + id + ')')
                 else:
@@ -74,7 +72,6 @@ def ce_role_dict_generation():
                     myGroup[key]['Role'].append(getSubstrateName(id, idToName) + '(' + id + ')')
                 else:
                     myGroup[key]['Role'].append(str(idRoles) + '-' + getSubstrateName(id, idToName) + '(' + id + ')')
-
     
     return myGroup
 
@@ -220,10 +217,8 @@ def tsv_generation():
                     output_row[start_index+4] = str(first_protein_vals['pident']).strip()
                     output_row[start_index+5] = str(first_protein_vals['qcov']).strip()
                     output_row[start_index+6] = str(first_protein_vals['scov']).strip()
-
                     output_row[2] = ", ".join(first_protein_vals['CE']).replace("'", "").strip()
                     output_row[3] = ", ".join(first_protein_vals['Role']).replace("'", "").strip()
-
                     output_row[4] = str(first_protein_vals['hit_tms_no']).strip()
             else:
                 output_row[NUM_COL_PRE_GENOME+i] = '-'
