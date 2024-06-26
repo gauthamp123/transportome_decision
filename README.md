@@ -32,11 +32,25 @@ Output:
 - Red.tsv: Transport systems that were not found in the genome.
 
 ## Create Master Table
-Collect all the greens files from your analysis using this command:
+1. Create new directory to store smith-waterman results used to create master table
+2. Enter new directory and collect all the greens files from your analysis using this command:
 
-`mkdir greens`
+   `mkdir greens`
+  
+   `cp */analysis/Green.tsv greens/`
 
-`cp */analysis/Green.tsv greens/`
+3. Run command:
+
+   `python master_table_gen.py -p PATH_TO_CREATED_DIR -c PATH_TO_CHEBI.OBO -s ../substrateTypes.tsv`
+
+  Helpful flags:
+
+  - -p: Path to directory containing greens directory
+  - -c: Path to chebi.obo
+  - -s: Path to substrate table
+  - -o: Output directory
+
+
 
 
 
